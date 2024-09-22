@@ -14,6 +14,7 @@
     <Deterministic>true</Deterministic>
     <ApplicationIcon>RW Mod Structure Builder.ico</ApplicationIcon>
     <SignAssembly>true</SignAssembly>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>

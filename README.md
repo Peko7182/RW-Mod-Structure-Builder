@@ -7,6 +7,8 @@ A simple console application that automates the creation of a RimWorld mod struc
 ## Features
 
 - Automatically creates the basic folder structure for a RimWorld mod
+- Optionally **creates a Visual Studio project** if selected
+- Automatically saves build output to `Common/Assemblies`
 - Generates the `About.xml` file with user-provided metadata
 - Supports adding mod dependencies, load order, and incompatibilities
 - Handles mod preview image and icon
@@ -14,20 +16,30 @@ A simple console application that automates the creation of a RimWorld mod struc
 
 ## How It Works
 
+*Video from v0.0.0 (Outdated)*
 ![Demo GIF](Ussage.gif)
 
-1. Run the application
-2. Follow the prompts to enter your mod details:
+1. Run the application.
+2. Provide paths for your mod preview image and icon.
+3. Follow the prompts to enter your mod details:
     - Mod name
     - Package ID
     - Author(s)
     - Description
     - Supported RimWorld versions
-    - Optional: mod version, URL, dependencies, etc.
-3. Provide paths for your mod preview image and icon
-4. The application will create the mod folder structure in your RimWorld mods directory
+    - Visual Studio Project creation (y/n)
+        - If "y", it will create a new structure with the following:
+            - `About`
+            - `Common`
+                - Subfolders
+            - `Source`
+                - Visual Studio Project (`.sln`, `.csproj`, `.cs`, `Properties/AssemblyInfo.cs`)
+        - Build output automatically saved to `Common/Assemblies`
+4. The application will create the mod folder structure in your RimWorld mods directory.
 
 ## Folder Structure Created
+
+### Default Structure:
 
 - About
     - About.xml
@@ -40,6 +52,14 @@ A simple console application that automates the creation of a RimWorld mod struc
 - Sounds
 - Textures
 
+### If Visual Studio Project is Selected:
+
+- About
+- Common
+    - Subfolders (`Assemblies`, `Defs`, ...)
+- Source
+    - Visual Studio Project (`.sln`, `.csproj`, `.cs`, `Properties/AssemblyInfo.cs`)
+
 ## Getting Started
 
 1. Go to the [latest release on GitHub](https://github.com/Peko7182/RimWorld-Mod-Structure-Builder/releases)
@@ -50,6 +70,10 @@ A simple console application that automates the creation of a RimWorld mod struc
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome!
 
 ## Acknowledgments
 

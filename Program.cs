@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -13,7 +14,8 @@ namespace RimWorld_Mod_Structure_Builder
             Logging.Log("Welcome to the RimWorld Mod Creator!");
             
             // Get RimWorld Mod Folder
-            var modFolder = Utils.GetRimWorldModFolder();
+            var rimWorldFolder = Utils.GetRimWorldFolder();
+            var modFolder = Utils.GetRimWorldModFolder(rimWorldFolder);
             Logging.Log($"RimWorld mod folder found: {modFolder}");
 
             // Get Image Path
@@ -64,7 +66,8 @@ namespace RimWorld_Mod_Structure_Builder
             );
 
             // Optional parameters
-            modMetaData.AddIfNotNullOrEmpty("modVersion", Utils.GetSingleInput("Enter the mod version (e.g., 1.0.0.0):", required: false));
+            var modVersion = "0.0.0.1";
+            modMetaData.AddIfNotNullOrEmpty("modVersion", modVersion);
             modMetaData.AddIfNotNullOrEmpty("url", Utils.GetSingleInput("Enter the URL (e.g., GitHub, etc.):", required: false));
 
             // Optional parameters - Mod Dependencies
@@ -107,7 +110,7 @@ namespace RimWorld_Mod_Structure_Builder
                 }
             }
 
-            // Create mod folder structure
+            // Create ModFolder
             var newModFolder = Path.Combine(modFolder, modName);
             while (Directory.Exists(newModFolder))
             {
@@ -116,27 +119,51 @@ namespace RimWorld_Mod_Structure_Builder
                 newModFolder = Path.Combine(modFolder, modName);
             }
             Utils.CreateDirectory(newModFolder);
+
+            // Create mod folder structure
+            var folders = new List<string> { "Assemblies", "Defs", "Languages", "Patches", "Sounds", "Textures" };
+
+            // Create About folder in the main ModFolder
             Utils.CreateDirectory(Path.Combine(newModFolder, "About"));
-            Utils.CreateDirectory(Path.Combine(newModFolder, "Assemblies"));
-            Utils.CreateDirectory(Path.Combine(newModFolder, "Defs"));
-            Utils.CreateDirectory(Path.Combine(newModFolder, "Languages"));
-            Utils.CreateDirectory(Path.Combine(newModFolder, "Patches"));
-            Utils.CreateDirectory(Path.Combine(newModFolder, "Sounds"));
-            Utils.CreateDirectory(Path.Combine(newModFolder, "Textures"));
+            
+            // Create a Visual Studio project if requested
+            var visualStudioProject = Utils.GetYesNoInput("Do you want to create a Visual Studio project?");
+            if (visualStudioProject)
+            {
+                // Create Common folder
+                var commonPath = Path.Combine(newModFolder, "Common");
+                Utils.CreateDirectory(commonPath);
+                
+                // Create Source folder
+                var sourcePath = Path.Combine(newModFolder, "Source");
+                Utils.CreateDirectory(sourcePath);
+
+                // Create folders inside Common folder
+                folders.ForEach(f => Utils.CreateDirectory(Path.Combine(commonPath, f)));
+
+                // Create Visual Studio Project
+                var projectName = modName.Replace(" ", "");
+
+                Utils.CreateVisualStudioProject(projectName, modName, modVersion, description, authors, rimWorldFolder, sourcePath);
+
+                Logging.Success($"Visual Studio project created successfully in '{sourcePath}'.");
+            }
+            else
+            {
+                // Create folders in ModFolder
+                folders.ForEach(f => Utils.CreateDirectory(Path.Combine(newModFolder, f)));
+            }
 
             // Save About.xml
-            XDocument aboutXml = new XDocument(
-                new XDeclaration("1.0", "utf-8", null),
-                modMetaData
-            );
-            aboutXml.Save(Path.Combine(newModFolder, "About", "About.xml"));
+            new XDocument(new XDeclaration("1.0", "utf-8", null), modMetaData)
+                .Save(Path.Combine(newModFolder, "About", "About.xml"));
 
             // Save Preview.png
             if (!string.IsNullOrEmpty(imagePath))
                 File.Copy(imagePath, Path.Combine(newModFolder, "About", "Preview.png"));
             else
                 Logging.Warn("Don't forget to add a preview image.");
-            
+
             // Save ModIcon.png
             if (!string.IsNullOrEmpty(modIcon))
                 File.Copy(modIcon, Path.Combine(newModFolder, "About", "ModIcon.png"));
@@ -146,23 +173,34 @@ namespace RimWorld_Mod_Structure_Builder
                 Logging.Warn("Don't forget to add a mod icon.");
 
             Logging.Success($"Mod structure created successfully in '{newModFolder}'.");
-            
-            Logging.Info("Assemblies: Add custom code to RimWorld in the form of compiled dynamic-link library or DLL files.");
-            Logging.Info("Defs: XML Definitions or Defs are the primary content definition and configuration source for RimWorld.");
-            Logging.Info("Languages: Localization and translations for Defs and code-referenced text.");
-            Logging.Info("Patches: Modify Defs from the vanilla game, DLCs, or even other mods in a safe and interoperable manner.");
-            Logging.Info("Sounds: Custom sound files for mods. Use Ogg, MP3, or WAV files.");
-            Logging.Info("Textures: Custom texture files for mods. Use PNG files.");
-            
-            Process.Start(newModFolder);
-            Process.Start(Path.Combine(newModFolder, "About", "About.xml"));
 
+            // Show information about mod structure
+            var infoMessages = new List<string>
+            {
+                "Assemblies: Add custom code to RimWorld in the form of compiled dynamic-link library or DLL files.",
+                "Defs: XML Definitions or Defs are the primary content definition and configuration source for RimWorld.",
+                "Languages: Localization and translations for Defs and code-referenced text.",
+                "Patches: Modify Defs from the vanilla game, DLCs, or even other mods in a safe and interoperable manner.",
+                "Sounds: Custom sound files for mods. Use Ogg, MP3, or WAV files.",
+                "Textures: Custom texture files for mods. Use PNG files."
+            };
+            infoMessages.ForEach(Logging.Info);
 
+            // Open RimWorld wiki
             if (Utils.GetYesNoInput("Do you want to see the RimWorld Wiki for mod folder structure?"))
             {
                 Process.Start("https://rimworldwiki.com/wiki/Modding_Tutorials/Mod_Folder_Structure");
             }
 
+            // Open mod folder and about file
+            Process.Start(newModFolder);
+            Process.Start(Path.Combine(newModFolder, "About", "About.xml"));
+            
+            // Open Visual Studio project
+            if (visualStudioProject)
+                Process.Start(Utils.FirstFoundFile(Path.Combine(newModFolder, "Source"), "*.sln"));
+
+            // Exit
             Environment.FailFast(string.Empty);
         }
     }
