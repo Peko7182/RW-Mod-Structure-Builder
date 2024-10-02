@@ -250,6 +250,8 @@ namespace RimWorld_Mod_Structure_Builder
   </ItemGroup>
   <ItemGroup>
     <Compile Include=""{projectName}.cs"" />
+    <Compile Include=""Mod.cs"" />
+    <Compile Include=""Settings.cs"" />
     <Compile Include=""Properties\AssemblyInfo.cs"" />
   </ItemGroup>
   <Import Project=""$(MSBuildToolsPath)\Microsoft.CSharp.targets"" />
@@ -282,7 +284,7 @@ Global
 	EndGlobalSection
 EndGlobal".Trim());
 
-                // Create a sample C# file
+                // Create a C# main file
                 File.WriteAllText(Path.Combine(sourcePath, $"{projectName}.cs"), $@"
 using RimWorld;
 using Verse;
@@ -296,6 +298,63 @@ namespace {projectName}
         static {projectName}()
         {{
             Log.Message($""[{modName} v{modVersion}] Initialized"");
+        }}
+    }}
+}}".Trim());
+                // Create a C# settings file
+                File.WriteAllText(Path.Combine(sourcePath, $"Settings.cs"), $@"
+using Verse;
+
+namespace {projectName}
+{{
+    public class {projectName}Settings : ModSettings
+    {{
+        // Setting to enable/disable mod
+        public bool EnableMod = true;
+
+        // Method to save and load the settings
+        public override void ExposeData()
+        {{
+            base.ExposeData();
+            Scribe_Values.Look(ref EnableMod, ""enableMod"", true);
+        }}
+    }}
+}}".Trim());
+                // Create a C# mod file
+                File.WriteAllText(Path.Combine(sourcePath, $"Mod.cs"), $@"
+using UnityEngine;
+using Verse;
+
+namespace {projectName}
+{{
+    public class {projectName}Mod : Mod
+    {{
+        // Reference to the settings
+        public static {projectName}Settings Settings;
+
+        public {projectName}Mod(ModContentPack content) : base(content)
+        {{
+            // Initialize the settings
+            Settings = GetSettings<{projectName}Settings>();
+        }}
+
+        // This is where the settings window UI is drawn
+        public override void DoSettingsWindowContents(Rect inRect)
+        {{
+            // Create a listing for UI elements
+            Listing_Standard listingStandard = new Listing_Standard();
+            listingStandard.Begin(inRect);
+
+            // Checkboxes for the settings
+            listingStandard.CheckboxLabeled(""Enable Mod"", ref Settings.EnableMod, ""Enables the mod."");
+
+            listingStandard.End();
+        }}
+
+        // The name displayed in the mod settings menu
+        public override string SettingsCategory()
+        {{
+            return ""{projectName}"";
         }}
     }}
 }}".Trim());
